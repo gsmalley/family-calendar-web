@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Clock, Flame, Trophy, Star, Calendar, Utensils, Newspaper, X, Plus } from 'lucide-react';
+import { CheckCircle, Clock, Flame, Trophy, Calendar, Utensils, Newspaper, Plus, Loader2 } from 'lucide-react';
+import { tasks as tasksApi, events as eventsApi, meals as mealsApi, familyMembers, dashboard } from '../../services/api';
 
 // Types
 interface Task {
@@ -11,8 +12,14 @@ interface Task {
   due_time?: string;
   priority: 'high' | 'medium' | 'low';
   assigned_to: number;
-  memberName: string;
-  memberColor: string;
+  family_member_id: number;
+}
+
+interface FamilyMember {
+  id: number;
+  name: string;
+  avatar: string;
+  color: string;
 }
 
 interface Event {
@@ -23,8 +30,7 @@ interface Event {
   end_time?: string;
   location?: string;
   event_type: string;
-  memberId: number;
-  memberName: string;
+  family_member_id: number;
 }
 
 interface Meal {
@@ -32,11 +38,12 @@ interface Meal {
   name: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner';
   date: string;
-  plannedBy?: string;
+  planned_by?: string;
 }
 
 interface LeaderboardEntry {
   id: number;
+  user_id: number;
   name: string;
   avatar: string;
   points: number;
@@ -45,7 +52,7 @@ interface LeaderboardEntry {
 
 interface Weather {
   temp: number;
-  feelsLike: number;
+  feels_like: number;
   condition: string;
   icon: string;
   humidity: number;
@@ -58,75 +65,22 @@ interface NewsItem {
 }
 
 interface UserStats {
-  tasksCompletedToday: number;
-  tasksCompletedThisWeek: number;
-  currentStreak: number;
-  totalPoints: number;
-  pointsThisWeek: number;
+  tasks_completed_today: number;
+  tasks_completed_this_week: number;
+  current_streak: number;
+  total_points: number;
+  points_this_week: number;
   badges: string[];
 }
 
-// Mock Data
-const mockFamilyMembers = [
-  { id: 1, name: 'Dad', avatar: '👨', color: '#3B82F6' },
-  { id: 2, name: 'Mom', avatar: '👩', color: '#EC4899' },
-  { id: 3, name: 'Emma', avatar: '👧', color: '#10B981' },
-  { id: 4, name: 'Jack', avatar: '👦', color: '#F59E0B' },
-];
-
-const mockTasks: Task[] = [
-  { id: 1, title: 'Finish report', completed: false, due_time: '5:00 PM', priority: 'high', assigned_to: 1, memberName: 'Dad', memberColor: '#3B82F6' },
-  { id: 2, title: 'Call grandma', completed: true, priority: 'medium', assigned_to: 1, memberName: 'Dad', memberColor: '#3B82F6' },
-  { id: 3, title: 'Grocery shop', completed: false, due_time: '10:00 AM', priority: 'medium', assigned_to: 2, memberName: 'Mom', memberColor: '#EC4899' },
-  { id: 4, title: 'Pick up kids', completed: false, due_time: '3:30 PM', priority: 'high', assigned_to: 2, memberName: 'Mom', memberColor: '#EC4899' },
-  { id: 5, title: 'Math homework', completed: false, due_time: '4:00 PM', priority: 'high', assigned_to: 3, memberName: 'Emma', memberColor: '#10B981' },
-  { id: 6, title: 'Practice piano', completed: false, due_time: '6:00 PM', priority: 'low', assigned_to: 3, memberName: 'Emma', memberColor: '#10B981' },
-  { id: 7, title: 'Clean room', completed: false, due_time: '12:00 PM', priority: 'medium', assigned_to: 4, memberName: 'Jack', memberColor: '#F59E0B' },
-  { id: 8, title: 'Soccer practice', completed: false, due_time: '4:00 PM', priority: 'medium', assigned_to: 4, memberName: 'Jack', memberColor: '#F59E0B' },
-];
-
-const mockEvents: Event[] = [
-  { id: 1, title: 'Graduation Ceremony', date: '2026-02-25', start_time: '2:00 PM', end_time: '4:00 PM', location: 'School Gymnasium', event_type: 'school', memberId: 3, memberName: 'Emma' },
-  { id: 2, title: 'Soccer Practice', date: '2026-02-25', start_time: '4:00 PM', end_time: '5:30 PM', location: 'Central Park', event_type: 'sports', memberId: 4, memberName: 'Jack' },
-];
-
-const mockMeals: Meal[] = [
-  { id: 1, name: 'Pancakes', meal_type: 'breakfast', date: '2026-02-25', plannedBy: 'Mom' },
-  { id: 2, name: 'Pizza', meal_type: 'lunch', date: '2026-02-25' },
-  { id: 3, name: 'Pasta', meal_type: 'dinner', date: '2026-02-25', plannedBy: 'Dad' },
-];
-
-const mockLeaderboard: LeaderboardEntry[] = [
-  { id: 3, name: 'Emma', avatar: '👧', points: 450, streak: 7 },
-  { id: 4, name: 'Jack', avatar: '👦', points: 420, streak: 3 },
-  { id: 1, name: 'Dad', avatar: '👨', points: 380, streak: 5 },
-  { id: 2, name: 'Mom', avatar: '👩', points: 350, streak: 4 },
-];
-
-const mockWeather: Weather = {
-  temp: 72,
-  feelsLike: 70,
-  condition: 'Sunny',
-  icon: '☀️',
-  humidity: 45,
+// Helper to get member info
+const getMemberInfo = (members: FamilyMember[], id: number) => {
+  const member = members.find(m => m.id === id);
+  return member || { name: 'Unknown', color: '#666' };
 };
 
-const mockNews: NewsItem[] = [
-  { headline: 'Local school wins state award', source: 'Local News' },
-  { headline: 'Weather: Sunny weekend ahead', source: 'Weather' },
-  { headline: 'New recipe: Tacos Tuesday!', source: 'Family Kitchen' },
-];
-
-const mockBadges = [
-  { icon: '🌅', name: 'Early Bird', earned: true },
-  { icon: '🏆', name: 'Task Master', earned: true },
-  { icon: '🔥', name: '7-Day Streak', earned: true },
-  { icon: '📚', name: 'Homework Hero', earned: false },
-  { icon: '🍳', name: 'Meal Planner', earned: false },
-];
-
-// Components
-function Header({ weather, dateStr }: { weather: Weather; dateStr: string }) {
+// Header Component
+function Header({ weather, dateStr }: { weather: Weather | null; dateStr: string }) {
   const [greeting, setGreeting] = useState('Good Morning');
   
   useEffect(() => {
@@ -149,25 +103,42 @@ function Header({ weather, dateStr }: { weather: Weather; dateStr: string }) {
         <p className="text-xl text-white font-semibold">{dateStr}</p>
       </div>
       <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-xl">
-        <span className="text-4xl">{weather.icon}</span>
-        <div>
-          <p className="text-2xl font-bold text-white">{weather.temp}°F</p>
-          <p className="text-sm text-slate-400">{weather.condition}</p>
-        </div>
+        {weather ? (
+          <>
+            <span className="text-4xl">{weather.icon}</span>
+            <div>
+              <p className="text-2xl font-bold text-white">{weather.temp}°F</p>
+              <p className="text-sm text-slate-400">{weather.condition}</p>
+            </div>
+          </>
+        ) : (
+          <p className="text-slate-400">Loading weather...</p>
+        )}
       </div>
     </div>
   );
 }
 
-function TaskPanel({ tasks, onComplete }: { tasks: Task[]; onComplete: (id: number) => void }) {
+// Task Panel Component
+function TaskPanel({ 
+  tasks, 
+  members, 
+  onComplete,
+  loading 
+}: { 
+  tasks: Task[]; 
+  members: FamilyMember[];
+  onComplete: (id: number) => void;
+  loading: boolean;
+}) {
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   
   const filteredTasks = selectedMember 
-    ? tasks.filter(t => t.assigned_to === selectedMember)
-    : tasks;
+    ? tasks.filter(t => t.family_member_id === selectedMember && !t.completed)
+    : tasks.filter(t => !t.completed);
 
-  const membersWithTasks = mockFamilyMembers.filter(m => 
-    tasks.some(t => t.assigned_to === m.id && !t.completed)
+  const membersWithTasks = members.filter(m => 
+    tasks.some(t => t.family_member_id === m.id && !t.completed)
   );
 
   return (
@@ -189,7 +160,7 @@ function TaskPanel({ tasks, onComplete }: { tasks: Task[]; onComplete: (id: numb
         >
           All
         </button>
-        {mockFamilyMembers.map(member => (
+        {members.map(member => (
           <button
             key={member.id}
             onClick={() => setSelectedMember(member.id)}
@@ -207,52 +178,49 @@ function TaskPanel({ tasks, onComplete }: { tasks: Task[]; onComplete: (id: numb
 
       {/* Task List */}
       <div className="flex-1 overflow-y-auto space-y-2">
-        {filteredTasks.map((task, index) => (
-          <motion.div
-            key={task.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className={`p-3 bg-slate-700/50 rounded-xl border-l-4 cursor-pointer transition-all hover:bg-slate-700 ${
-              task.completed ? 'opacity-50' : ''
-            }`}
-            style={{ borderLeftColor: task.memberColor }}
-            onClick={() => !task.completed && onComplete(task.id)}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                task.completed 
-                  ? 'bg-green-500 border-green-500' 
-                  : 'border-slate-500 hover:border-green-400'
-              }`}>
-                {task.completed && <CheckCircle className="w-4 h-4 text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-medium truncate ${task.completed ? 'line-through text-slate-500' : 'text-white'}`}>
-                  {task.title}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-slate-400">{task.memberName}</span>
-                  {task.due_time && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {task.due_time}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className={`w-2 h-2 rounded-full ${
-                task.priority === 'high' ? 'bg-red-500' :
-                task.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
-              }`} />
-            </div>
-          </motion.div>
-        ))}
-        
-        {filteredTasks.filter(t => !t.completed).length === 0 && (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+          </div>
+        ) : filteredTasks.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <p className="text-4xl mb-2">🎉</p>
             <p>All done!</p>
           </div>
+        ) : (
+          filteredTasks.map((task, index) => {
+            const member = getMemberInfo(members, task.family_member_id);
+            return (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="p-3 bg-slate-700/50 rounded-xl border-l-4 cursor-pointer transition-all hover:bg-slate-700"
+                style={{ borderLeftColor: member.color }}
+                onClick={() => onComplete(task.id)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full border-2 border-slate-500 hover:border-green-400 flex items-center justify-center transition-all" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white truncate">{task.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-slate-400">{member.name}</span>
+                      {task.due_time && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {task.due_time}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    task.priority === 'high' ? 'bg-red-500' :
+                    task.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                  }`} />
+                </div>
+              </motion.div>
+            );
+          })
         )}
       </div>
 
@@ -263,7 +231,8 @@ function TaskPanel({ tasks, onComplete }: { tasks: Task[]; onComplete: (id: numb
   );
 }
 
-function EventsSection({ events }: { events: Event[] }) {
+// Events Section Component
+function EventsSection({ events, members, loading }: { events: Event[]; members: FamilyMember[]; loading: boolean }) {
   const eventIcons: Record<string, string> = {
     school: '🎓',
     sports: '🏃',
@@ -278,39 +247,49 @@ function EventsSection({ events }: { events: Event[] }) {
         <Calendar className="w-6 h-6 text-purple-400" />
         Today's Events
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {events.map((event, index) => (
-          <motion.div
-            key={event.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-purple-500/50 cursor-pointer transition-all"
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-3xl">{eventIcons[event.event_type] || eventIcons.default}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white truncate">{event.title}</h3>
-                <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
-                  <Clock className="w-3 h-3" /> {event.start_time}{event.end_time && ` - ${event.end_time}`}
-                </p>
-                {event.location && (
-                  <p className="text-sm text-slate-400">{event.location}</p>
-                )}
-                <p className="text-xs text-purple-400 mt-1">For: {event.memberName}</p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-        {events.length === 0 && (
-          <p className="col-span-2 text-center py-4 text-slate-500">No events today</p>
-        )}
-      </div>
+      
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+        </div>
+      ) : events.length === 0 ? (
+        <p className="text-center py-4 text-slate-500">No events today</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {events.map((event, index) => {
+            const member = getMemberInfo(members, event.family_member_id);
+            return (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="p-4 bg-slate-700/50 rounded-xl border border-slate-600 hover:border-purple-500/50 cursor-pointer transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-3xl">{eventIcons[event.event_type] || eventIcons.default}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white truncate">{event.title}</h3>
+                    <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
+                      <Clock className="w-3 h-3" /> {event.start_time}{event.end_time && ` - ${event.end_time}`}
+                    </p>
+                    {event.location && (
+                      <p className="text-sm text-slate-400">{event.location}</p>
+                    )}
+                    <p className="text-xs text-purple-400 mt-1">For: {member.name}</p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function MealsSection({ meals }: { meals: Meal[] }) {
+// Meals Section Component
+function MealsSection({ meals, loading }: { meals: Meal[]; loading: boolean }) {
   const mealIcons = { breakfast: '🥞', lunch: '🍕', dinner: '🍝' };
 
   return (
@@ -319,60 +298,97 @@ function MealsSection({ meals }: { meals: Meal[] }) {
         <Utensils className="w-6 h-6 text-orange-400" />
         Today's Meals
       </h2>
-      <div className="grid grid-cols-3 gap-3">
-        {(['breakfast', 'lunch', 'dinner'] as const).map(type => {
-          const meal = meals.find(m => m.meal_type === type);
-          return (
-            <div key={type} className="p-4 bg-slate-700/50 rounded-xl text-center">
-              <span className="text-3xl block mb-2">{mealIcons[type]}</span>
-              <p className="text-xs text-slate-400 capitalize">{type}</p>
-              <p className="font-medium text-white truncate">{meal?.name || '—'}</p>
-              {meal?.plannedBy && (
-                <p className="text-xs text-slate-500">by {meal.plannedBy}</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      
+      {loading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-3">
+          {(['breakfast', 'lunch', 'dinner'] as const).map(type => {
+            const meal = meals.find(m => m.meal_type === type);
+            return (
+              <div key={type} className="p-4 bg-slate-700/50 rounded-xl text-center">
+                <span className="text-3xl block mb-2">{mealIcons[type]}</span>
+                <p className="text-xs text-slate-400 capitalize">{type}</p>
+                <p className="font-medium text-white truncate">{meal?.name || '—'}</p>
+                {meal?.planned_by && (
+                  <p className="text-xs text-slate-500">by {meal.planned_by}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function NewsSection({ news }: { news: NewsItem[] }) {
+// News Section Component
+function NewsSection({ news, loading }: { news: NewsItem[]; loading: boolean }) {
   return (
     <div className="bg-slate-800/50 rounded-2xl p-4 mt-4">
       <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
         <Newspaper className="w-6 h-6 text-blue-400" />
         Family News
       </h2>
-      <div className="space-y-2">
-        {news.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.1 }}
-            className="p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 cursor-pointer transition-colors"
-          >
-            <p className="text-white text-sm">{item.headline}</p>
-            <p className="text-xs text-slate-500 mt-1">{item.source}</p>
-          </motion.div>
-        ))}
-      </div>
+      
+      {loading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+        </div>
+      ) : news.length === 0 ? (
+        <p className="text-center py-4 text-slate-500">No news available</p>
+      ) : (
+        <div className="space-y-2">
+          {news.map((item, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+              className="p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 cursor-pointer transition-colors"
+            >
+              <p className="text-white text-sm">{item.headline}</p>
+              <p className="text-xs text-slate-500 mt-1">{item.source}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
+// Gamification Panel Component
 function GamificationPanel({ 
   leaderboard, 
+  userStats,
   badges, 
-  selectedMember 
+  selectedMember,
+  members,
+  loading
 }: { 
   leaderboard: LeaderboardEntry[];
+  userStats: UserStats | null;
   badges: { icon: string; name: string; earned: boolean }[];
   selectedMember: number | null;
+  members: FamilyMember[];
+  loading: boolean;
 }) {
-  const currentStats = mockFamilyMembers.find(m => m.id === (selectedMember || 3)) || mockFamilyMembers[2];
+  const currentMember = selectedMember 
+    ? members.find(m => m.id === selectedMember)
+    : members[0];
+    
+  const currentStats = userStats;
+
+  // Map badges from API
+  const badgeIcons: Record<string, string> = {
+    'early_bird': '🌅',
+    'task_master': '🏆',
+    'streak_7': '🔥',
+    'homework_hero': '📚',
+    'meal_planner': '🍳',
+  };
 
   return (
     <div className="bg-slate-800/50 rounded-2xl p-4 h-full overflow-hidden flex flex-col">
@@ -383,50 +399,61 @@ function GamificationPanel({
 
       {/* Leaderboard */}
       <div className="space-y-2 mb-4">
-        {leaderboard.map((entry, index) => (
-          <motion.div
-            key={entry.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`flex items-center gap-3 p-3 rounded-xl ${
-              entry.id === selectedMember || (selectedMember === null && index === 0)
-                ? 'bg-yellow-500/20 border border-yellow-500/30'
-                : 'bg-slate-700/30'
-            }`}
-          >
-            <span className="text-lg font-bold text-slate-400 w-6">
-              {index === 0 ? '👑' : index + 1}
-            </span>
-            <span className="text-2xl">{entry.avatar}</span>
-            <div className="flex-1">
-              <p className="font-medium text-white">{entry.name}</p>
-              <p className="text-xs text-slate-400 flex items-center gap-1">
-                <Flame className="w-3 h-3 text-orange-500" /> {entry.streak} day streak
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-yellow-400">{entry.points}</p>
-              <p className="text-xs text-slate-500">pts</p>
-            </div>
-          </motion.div>
-        ))}
+        {loading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+          </div>
+        ) : (
+          leaderboard.map((entry, index) => {
+            const member = members.find(m => m.id === entry.user_id);
+            return (
+              <motion.div
+                key={entry.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`flex items-center gap-3 p-3 rounded-xl ${
+                  entry.user_id === selectedMember || (selectedMember === null && index === 0)
+                    ? 'bg-yellow-500/20 border border-yellow-500/30'
+                    : 'bg-slate-700/30'
+                }`}
+              >
+                <span className="text-lg font-bold text-slate-400 w-6">
+                  {index === 0 ? '👑' : index + 1}
+                </span>
+                <span className="text-2xl">{member?.avatar || '👤'}</span>
+                <div className="flex-1">
+                  <p className="font-medium text-white">{entry.name}</p>
+                  <p className="text-xs text-slate-400 flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-500" /> {entry.streak} day streak
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-yellow-400">{entry.points}</p>
+                  <p className="text-xs text-slate-500">pts</p>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
       </div>
 
       {/* Stats for selected member */}
-      <div className="mb-4 p-4 bg-slate-700/30 rounded-xl">
-        <h3 className="text-sm font-semibold text-slate-400 mb-2">👤 {currentStats.name}'s Stats</h3>
-        <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="p-2 bg-slate-800/50 rounded-lg">
-            <p className="text-xl font-bold text-green-400">5</p>
-            <p className="text-xs text-slate-500">tasks today</p>
-          </div>
-          <div className="p-2 bg-slate-800/50 rounded-lg">
-            <p className="text-xl font-bold text-orange-400">80%</p>
-            <p className="text-xs text-slate-500">completed</p>
+      {currentStats && (
+        <div className="mb-4 p-4 bg-slate-700/30 rounded-xl">
+          <h3 className="text-sm font-semibold text-slate-400 mb-2">👤 {currentMember?.name || 'User'}'s Stats</h3>
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="p-2 bg-slate-800/50 rounded-lg">
+              <p className="text-xl font-bold text-green-400">{currentStats.tasks_completed_today}</p>
+              <p className="text-xs text-slate-500">tasks today</p>
+            </div>
+            <div className="p-2 bg-slate-800/50 rounded-lg">
+              <p className="text-xl font-bold text-orange-400">{currentStats.current_streak}</p>
+              <p className="text-xs text-slate-500">day streak</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Badges */}
       <div className="mb-4">
@@ -454,19 +481,24 @@ function GamificationPanel({
       {/* Total Points */}
       <div className="mt-auto p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30 text-center">
         <p className="text-sm text-slate-400">Total Family Points</p>
-        <p className="text-3xl font-bold text-yellow-400">1,600</p>
-        <p className="text-xs text-green-400">+150 this week</p>
+        <p className="text-3xl font-bold text-yellow-400">
+          {leaderboard.reduce((sum, e) => sum + e.points, 0)}
+        </p>
+        {currentStats && (
+          <p className="text-xs text-green-400">+{currentStats.points_this_week} this week</p>
+        )}
       </div>
     </div>
   );
 }
 
+// Footer Component
 function Footer({ 
   members, 
   selectedMember, 
   onSelect 
 }: { 
-  members: typeof mockFamilyMembers;
+  members: FamilyMember[];
   selectedMember: number | null;
   onSelect: (id: number | null) => void;
 }) {
@@ -502,9 +534,17 @@ function Footer({
 
 // Main Dashboard Component
 export default function DashboardTV() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [weather, setWeather] = useState<Weather | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   const [confetti, setConfetti] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const dateStr = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -513,20 +553,99 @@ export default function DashboardTV() {
     day: 'numeric' 
   });
 
-  const handleCompleteTask = (taskId: number) => {
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, completed: true } : t
-    ));
-    // Trigger confetti
-    setConfetti(prev => [...prev, Date.now()]);
-    setTimeout(() => {
-      setConfetti(prev => prev.slice(1));
-    }, 2000);
+  const today = new Date().toISOString().split('T')[0];
+
+  // Fetch all data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [
+          membersRes,
+          tasksRes,
+          eventsRes,
+          mealsRes,
+          leaderboardRes,
+          weatherRes,
+          newsRes
+        ] = await Promise.all([
+          familyMembers.getAll(),
+          tasksApi.getAll({ completed: false }),
+          eventsApi.getAll({ start: today, end: today }),
+          mealsApi.getByDate(today),
+          dashboard.getLeaderboard(),
+          dashboard.getWeather(),
+          dashboard.getNews(),
+        ]);
+
+        setMembers(membersRes.data);
+        setTasks(tasksRes.data);
+        setEvents(eventsRes.data);
+        setMeals(mealsRes.data);
+        setLeaderboard(leaderboardRes.data);
+        setWeather(weatherRes.data);
+        setNews(newsRes.data);
+
+        // Fetch user stats for selected member or first member
+        if (leaderboardRes.data.length > 0) {
+          const firstUserId = leaderboardRes.data[0].user_id;
+          try {
+            const statsRes = await dashboard.getUserStats(String(firstUserId));
+            setUserStats(statsRes.data);
+          } catch (e) {
+            console.log('Could not fetch user stats:', e);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [today]);
+
+  // Fetch user stats when selectedMember changes
+  useEffect(() => {
+    if (selectedMember) {
+      dashboard.getUserStats(String(selectedMember))
+        .then(res => setUserStats(res.data))
+        .catch(console.error);
+    } else if (leaderboard.length > 0) {
+      dashboard.getUserStats(String(leaderboard[0].user_id))
+        .then(res => setUserStats(res.data))
+        .catch(console.error);
+    }
+  }, [selectedMember, leaderboard]);
+
+  const handleCompleteTask = async (taskId: number) => {
+    try {
+      await tasksApi.toggle(String(taskId));
+      setTasks(prev => prev.map(t => 
+        t.id === taskId ? { ...t, completed: true } : t
+      ));
+      // Trigger confetti
+      setConfetti(prev => [...prev, Date.now()]);
+      setTimeout(() => {
+        setConfetti(prev => prev.slice(1));
+      }, 2000);
+    } catch (error) {
+      console.error('Error completing task:', error);
+    }
   };
 
-  const filteredTasks = selectedMember
-    ? tasks.filter(t => t.assigned_to === selectedMember)
-    : tasks;
+  // Build badges from API (mock for now - would come from user stats)
+  const badges = [
+    { icon: '🌅', name: 'Early Bird', earned: true },
+    { icon: '🏆', name: 'Task Master', earned: true },
+    { icon: '🔥', name: '7-Day Streak', earned: userStats?.current_streak ? userStats.current_streak >= 7 : false },
+    { icon: '📚', name: 'Homework Hero', earned: false },
+    { icon: '🍳', name: 'Meal Planner', earned: false },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
@@ -561,33 +680,41 @@ export default function DashboardTV() {
         )}
       </AnimatePresence>
 
-      <Header weather={mockWeather} dateStr={dateStr} />
+      <Header weather={weather} dateStr={dateStr} />
 
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         {/* Left Panel - Tasks */}
         <div className="w-80 flex-shrink-0">
-          <TaskPanel tasks={filteredTasks} onComplete={handleCompleteTask} />
+          <TaskPanel 
+            tasks={tasks} 
+            members={members} 
+            onComplete={handleCompleteTask}
+            loading={loading}
+          />
         </div>
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
-          <EventsSection events={mockEvents} />
-          <MealsSection meals={mockMeals} />
-          <NewsSection news={mockNews} />
+          <EventsSection events={events} members={members} loading={loading} />
+          <MealsSection meals={meals} loading={loading} />
+          <NewsSection news={news} loading={loading} />
         </div>
 
         {/* Right Panel - Gamification */}
         <div className="w-80 flex-shrink-0">
           <GamificationPanel 
-            leaderboard={mockLeaderboard} 
-            badges={mockBadges}
+            leaderboard={leaderboard}
+            userStats={userStats}
+            badges={badges}
             selectedMember={selectedMember}
+            members={members}
+            loading={loading}
           />
         </div>
       </div>
 
       <Footer 
-        members={mockFamilyMembers} 
+        members={members} 
         selectedMember={selectedMember}
         onSelect={setSelectedMember}
       />

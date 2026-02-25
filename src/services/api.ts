@@ -129,4 +129,12 @@ export const taskTypes = {
   delete: (id: string) => api.delete(`/task-types/${id}`),
 };
 
+// Dashboard / TV Dashboard endpoints (public)
+export const dashboard = {
+  getLeaderboard: () => api.get('/leaderboard'),
+  getUserStats: (userId: string) => api.get(`/users/${userId}/stats`),
+  getWeather: () => api.get('/weather'),
+  getNews: () => api.get('/news'),
+};
+
 export default api;
