@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import DashboardTV from './pages/dashboard/DashboardTV';
 import Calendar from './pages/Calendar';
 import Tasks from './pages/Tasks';
 import Homework from './pages/Homework';
@@ -40,6 +41,7 @@ export default function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/tv" element={<DashboardTV />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/homework" element={<Homework />} />
