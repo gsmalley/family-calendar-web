@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Plus, Clock, CheckCircle } from 'lucide-react';
 import { homework, familyMembers } from '../services/api';
-import { Homework, FamilyMember } from '../types';
+import { Homework as HomeworkData, FamilyMember } from '../types';
 
 export default function Homework() {
-  const [homework_, setHomework] = useState<Homework[]>([]);
+  const [homework_, setHomework] = useState<HomeworkData[]>([]);
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [loading, setLoading] = useState(true);

@@ -23,7 +23,7 @@ export default function MealForm({ isOpen, onClose, onSuccess, editMeal, date }:
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: date,
-    meal_type: 'dinner' as const,
+    meal_type: 'dinner',
     name: '',
     ingredients: '',
     notes: '',
