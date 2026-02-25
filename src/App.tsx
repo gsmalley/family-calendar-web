@@ -34,6 +34,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      {/* Public route - no auth required for TV dashboard */}
+      <Route path="/tv" element={<DashboardTV />} />
       <Route
         path="/*"
         element={
@@ -41,7 +43,6 @@ export default function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/tv" element={<DashboardTV />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/homework" element={<Homework />} />
