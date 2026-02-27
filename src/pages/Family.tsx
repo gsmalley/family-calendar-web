@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, Plus, Edit2, Trash2 } from 'lucide-react';
 import { familyMembers } from '../services/api';
 import { FamilyMember } from '../types';
+import FamilyMemberForm from '../components/FamilyMemberForm';
 
 const avatarColors = [
   'from-red-500 to-pink-500',
@@ -16,6 +17,8 @@ const avatarColors = [
 export default function Family() {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editMember, setEditMember] = useState<FamilyMember | undefined>(undefined);
 
   useEffect(() => {
     fetchMembers();
@@ -30,6 +33,20 @@ export default function Family() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddClick = () => {
+    setEditMember(undefined);
+    setShowForm(true);
+  };
+
+  const handleEditClick = (member: FamilyMember) => {
+    setEditMember(member);
+    setShowForm(true);
+  };
+
+  const handleFormSuccess = () => {
+    fetchMembers();
   };
 
   const deleteMember = async (id: string) => {
@@ -51,7 +68,7 @@ export default function Family() {
           <Users className="w-6 h-6 text-blue-400" />
           Family Members
         </h2>
-        <button className="p-2 bg-primary-500 rounded-lg">
+        <button onClick={handleAddClick} className="p-2 bg-primary-500 rounded-lg">
           <Plus className="w-5 h-5 text-white" />
         </button>
       </div>
@@ -65,7 +82,7 @@ export default function Family() {
           <div className="col-span-full text-center py-12">
             <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-500">No family members yet</p>
-            <button className="mt-4 px-4 py-2 bg-primary-500 rounded-lg text-white">
+            <button onClick={handleAddClick} className="mt-4 px-4 py-2 bg-primary-500 rounded-lg text-white">
               Add Member
             </button>
           </div>
@@ -79,7 +96,7 @@ export default function Family() {
               className="bg-dark-card rounded-2xl border border-dark-border p-4 text-center group relative"
             >
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                <button className="p-1.5 bg-dark-bg rounded-lg">
+                <button onClick={() => handleEditClick(member)} className="p-1.5 bg-dark-bg rounded-lg">
                   <Edit2 className="w-4 h-4 text-gray-400" />
                 </button>
                 <button 
@@ -123,6 +140,7 @@ export default function Family() {
 
         <motion.div
           whileTap={{ scale: 0.95 }}
+          onClick={handleAddClick}
           className="h-40 bg-dark-border/30 rounded-2xl border-2 border-dashed border-dark-border flex flex-col items-center justify-center cursor-pointer hover:border-primary-500/50 transition-colors"
         >
           <Plus className="w-8 h-8 text-gray-500 mb-2" />
@@ -141,6 +159,13 @@ export default function Family() {
           ))}
         </div>
       </div>
+
+      <FamilyMemberForm
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        onSuccess={handleFormSuccess}
+        editMember={editMember}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Edit2, Trash2 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
 import { events, familyMembers } from '../services/api';
 import { Event, FamilyMember } from '../types';
@@ -13,6 +13,7 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [editEvent, setEditEvent] = useState<Event | undefined>(undefined);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +32,33 @@ export default function Calendar() {
     };
     fetchData();
   }, []);
+
+  const handleAddEvent = () => {
+    setEditEvent(undefined);
+    setShowEventForm(true);
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEditEvent(event);
+    setShowEventForm(true);
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm('Delete this event?')) return;
+    try {
+      await events.delete(eventId);
+      // Refresh events
+      const eventsRes = await events.getAll();
+      setEvents(eventsRes.data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleFormSuccess = async () => {
+    const eventsRes = await events.getAll();
+    setEvents(eventsRes.data);
+  };
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -57,7 +85,7 @@ export default function Calendar() {
           Calendar
         </h2>
         <button 
-          onClick={() => setShowEventForm(true)}
+          onClick={handleAddEvent}
           className="p-2 bg-primary-500 rounded-lg"
         >
           <Plus className="w-5 h-5 text-white" />
@@ -151,7 +179,7 @@ export default function Calendar() {
               getEventsForDay(selectedDate).map(event => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 p-3 bg-dark-bg rounded-xl border border-dark-border"
+                  className="flex items-center gap-3 p-3 bg-dark-bg rounded-xl border border-dark-border group"
                 >
                   <div 
                     className="w-2 h-full rounded-full"
@@ -163,6 +191,20 @@ export default function Calendar() {
                       {event.all_day ? 'All day' : `${event.start_time} - ${event.end_time || ''}`}
                     </p>
                   </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleEditEvent(event)}
+                      className="p-1.5 bg-dark-card rounded-lg hover:bg-dark-border"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className="p-1.5 bg-dark-card rounded-lg hover:bg-dark-border"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -170,11 +212,12 @@ export default function Calendar() {
         </motion.div>
       )}
 
-      {/* Add Event Form */}
+      {/* Add/Edit Event Form */}
       <EventForm
         isOpen={showEventForm}
         onClose={() => setShowEventForm(false)}
-        onSuccess={() => window.location.reload()}
+        onSuccess={handleFormSuccess}
+        editEvent={editEvent}
         defaultDate={selectedDate ? format(selectedDate, "yyyy-MM-dd'T'HH:mm") : undefined}
       />
     </div>

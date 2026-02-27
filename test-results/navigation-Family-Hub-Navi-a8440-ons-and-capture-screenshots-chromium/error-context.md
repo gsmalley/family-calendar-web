@@ -1,0 +1,217 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - heading "Family Hub" [level=1] [ref=e11]
+          - paragraph [ref=e12]: Welcome, gene
+      - button [ref=e13] [cursor=pointer]:
+        - img [ref=e14]
+  - main [ref=e15]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "Leaderboard" [level=2] [ref=e19]:
+          - img [ref=e20]
+          - text: Leaderboard
+        - paragraph [ref=e26]: Compete with your family!
+      - generic [ref=e27]:
+        - button "Week" [ref=e28] [cursor=pointer]
+        - button "Month" [ref=e29] [cursor=pointer]
+        - button "All" [ref=e30] [cursor=pointer]
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]: 👨‍🎨
+          - generic [ref=e34]:
+            - paragraph [ref=e35]: "1890"
+            - paragraph [ref=e36]: pts
+          - paragraph [ref=e37]: Jack
+          - generic [ref=e38]:
+            - img [ref=e39]
+            - generic [ref=e41]: "7"
+        - generic [ref=e42]:
+          - img [ref=e43]
+          - generic [ref=e45]: 👩‍🎤
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: "2450"
+            - paragraph [ref=e48]: pts
+          - paragraph [ref=e49]: Emma
+          - generic [ref=e50]:
+            - img [ref=e51]
+            - generic [ref=e53]: "14"
+        - generic [ref=e54]:
+          - generic [ref=e55]: 👧
+          - generic [ref=e56]:
+            - paragraph [ref=e57]: "1650"
+            - paragraph [ref=e58]: pts
+          - paragraph [ref=e59]: Sophie
+          - generic [ref=e60]:
+            - img [ref=e61]
+            - generic [ref=e63]: "10"
+      - generic [ref=e64]:
+        - heading "All Members" [level=3] [ref=e65]
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]: "#1"
+            - generic [ref=e69]: 👩‍🎤
+            - generic [ref=e70]:
+              - paragraph [ref=e71]: Emma
+              - generic [ref=e72]:
+                - generic [ref=e73]:
+                  - img [ref=e74]
+                  - text: "2450"
+                - generic [ref=e76]:
+                  - img [ref=e77]
+                  - text: "14"
+                - generic [ref=e79]:
+                  - img [ref=e80]
+                  - text: "8"
+            - generic [ref=e86]: 🥉
+          - generic [ref=e87]:
+            - generic [ref=e88]: "#2"
+            - generic [ref=e89]: 👨‍🎨
+            - generic [ref=e90]:
+              - paragraph [ref=e91]: Jack
+              - generic [ref=e92]:
+                - generic [ref=e93]:
+                  - img [ref=e94]
+                  - text: "1890"
+                - generic [ref=e96]:
+                  - img [ref=e97]
+                  - text: "7"
+                - generic [ref=e99]:
+                  - img [ref=e100]
+                  - text: "5"
+            - generic [ref=e106]: 🥉
+          - generic [ref=e107]:
+            - generic [ref=e108]: "#3"
+            - generic [ref=e109]: 👧
+            - generic [ref=e110]:
+              - paragraph [ref=e111]: Sophie
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - img [ref=e114]
+                  - text: "1650"
+                - generic [ref=e116]:
+                  - img [ref=e117]
+                  - text: "10"
+                - generic [ref=e119]:
+                  - img [ref=e120]
+                  - text: "6"
+            - generic [ref=e126]: 🥉
+          - generic [ref=e127]:
+            - generic [ref=e128]: "#4"
+            - generic [ref=e129]: 👩
+            - generic [ref=e130]:
+              - paragraph [ref=e131]: Mom
+              - generic [ref=e132]:
+                - generic [ref=e133]:
+                  - img [ref=e134]
+                  - text: "1200"
+                - generic [ref=e136]:
+                  - img [ref=e137]
+                  - text: "21"
+                - generic [ref=e139]:
+                  - img [ref=e140]
+                  - text: "12"
+            - generic [ref=e146]: 🥉
+          - generic [ref=e147]:
+            - generic [ref=e148]: "#5"
+            - generic [ref=e149]: 👨
+            - generic [ref=e150]:
+              - paragraph [ref=e151]: Dad
+              - generic [ref=e152]:
+                - generic [ref=e153]:
+                  - img [ref=e154]
+                  - text: "950"
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: "5"
+                - generic [ref=e159]:
+                  - img [ref=e160]
+                  - text: "3"
+            - generic [ref=e166]: 🥉
+      - generic [ref=e167]:
+        - heading "Badges" [level=3] [ref=e168]:
+          - img [ref=e169]
+          - text: Badges
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]: ✅
+            - generic [ref=e174]: First Task
+            - generic [ref=e175]: ✓ Emma
+          - generic [ref=e176]:
+            - generic [ref=e177]: 🔥
+            - generic [ref=e178]: Week Warrior
+            - generic [ref=e179]: ✓ Emma
+          - generic [ref=e180]:
+            - generic [ref=e181]: 📚
+            - generic [ref=e182]: Homework Hero
+            - generic [ref=e183]: ✓ Jack
+          - generic [ref=e184]:
+            - generic [ref=e185]: 🍽️
+            - generic [ref=e186]: Meal Planner
+          - generic [ref=e187]:
+            - generic [ref=e188]: 🎵
+            - generic [ref=e189]: Practice Master
+          - generic [ref=e190]:
+            - generic [ref=e191]: 🌅
+            - generic [ref=e192]: Early Bird
+            - generic [ref=e193]: ✓ Sophie
+          - generic [ref=e194]:
+            - generic [ref=e195]: 👑
+            - generic [ref=e196]: Family Leader
+            - generic [ref=e197]: ✓ Emma
+          - generic [ref=e198]:
+            - generic [ref=e199]: ⚡
+            - generic [ref=e200]: Streak Legend
+      - generic [ref=e201]:
+        - heading "Your Progress" [level=3] [ref=e202]
+        - generic [ref=e203]:
+          - generic [ref=e204]:
+            - generic [ref=e205]:
+              - generic [ref=e206]: Points to next rank
+              - generic [ref=e207]: 550 / 1500
+            - paragraph [ref=e210]: Gold rank - 950 points away!
+          - generic [ref=e211]:
+            - generic [ref=e212]:
+              - generic [ref=e213]: Current streak
+              - generic [ref=e214]: 7 days 🔥
+            - paragraph [ref=e217]: 3 more days to Week Warrior badge!
+  - navigation [ref=e218]:
+    - link "Home" [ref=e219] [cursor=pointer]:
+      - /url: /
+      - img [ref=e220]
+      - generic [ref=e223]: Home
+    - link "Calendar" [ref=e224] [cursor=pointer]:
+      - /url: /calendar
+      - img [ref=e225]
+      - generic [ref=e227]: Calendar
+    - link "Tasks" [ref=e228] [cursor=pointer]:
+      - /url: /tasks
+      - img [ref=e229]
+      - generic [ref=e232]: Tasks
+    - link "Homework" [ref=e233] [cursor=pointer]:
+      - /url: /homework
+      - img [ref=e234]
+      - generic [ref=e237]: Homework
+    - link "Meals" [ref=e238] [cursor=pointer]:
+      - /url: /meals
+      - img [ref=e239]
+      - generic [ref=e242]: Meals
+    - link "Classes" [ref=e243] [cursor=pointer]:
+      - /url: /classes
+      - img [ref=e244]
+      - generic [ref=e247]: Classes
+    - link "Family" [ref=e248] [cursor=pointer]:
+      - /url: /family
+      - img [ref=e249]
+      - generic [ref=e254]: Family
+    - link "Leaderboard" [ref=e255] [cursor=pointer]:
+      - /url: /leaderboard
+      - img [ref=e256]
+      - generic [ref=e262]: Leaderboard
+```
