@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Plus, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { GraduationCap, Plus, Calendar, Clock, CheckCircle, X } from 'lucide-react';
 import { classes, familyMembers } from '../services/api';
 import { Class, FamilyMember } from '../types';
 
@@ -9,6 +9,7 @@ export default function Classes() {
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showClassForm, setShowClassForm] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -30,6 +31,43 @@ export default function Classes() {
   };
 
   const getMemberName = (id?: string) => family.find(m => m.id === id)?.name || 'All';
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const classData = {
+      name: formData.get('name'),
+      subject: formData.get('subject'),
+      schedule: formData.get('schedule'),
+      instructor: formData.get('instructor'),
+      notes: formData.get('notes'),
+      family_member_id: formData.get('family_member_id'),
+    };
+
+    try {
+      if (editingClass) {
+        await classes.update(editingClass.id, classData);
+      } else {
+        await classes.create(classData);
+      }
+      setShowClassForm(false);
+      setEditingClass(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error saving class:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Delete this class?')) {
+      try {
+        await classes.delete(id);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting class:', error);
+      }
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -106,9 +144,20 @@ export default function Classes() {
                     </div>
                   </div>
                 </div>
-                <button className="p-2 text-gray-500 hover:text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => { setEditingClass(cls); setShowClassForm(true); }}
+                    className="p-2 text-gray-500 hover:text-primary-400"
+                  >
+                    <Clock className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(cls.id)}
+                    className="p-2 text-gray-500 hover:text-red-400"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               {cls.notes && (
                 <p className="text-sm text-gray-500 mt-3 pt-3 border-t border-dark-border">
@@ -119,6 +168,99 @@ export default function Classes() {
           ))
         )}
       </div>
+
+      {/* Class Form Modal */}
+      {showClassForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-dark-card rounded-xl border border-dark-border p-6 w-full max-w-md"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">
+                {editingClass ? 'Edit Class' : 'Add Class'}
+              </h3>
+              <button 
+                onClick={() => { setShowClassForm(false); setEditingClass(null); }}
+                className="p-2 text-gray-500 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Class Name</label>
+                <input
+                  name="name"
+                  defaultValue={editingClass?.name}
+                  required
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                  placeholder="e.g., Math 101"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Subject</label>
+                <input
+                  name="subject"
+                  defaultValue={editingClass?.subject}
+                  required
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                  placeholder="e.g., Mathematics"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Schedule</label>
+                <input
+                  name="schedule"
+                  defaultValue={editingClass?.schedule}
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                  placeholder="e.g., Mon/Wed/Fri 10am"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Instructor</label>
+                <input
+                  name="instructor"
+                  defaultValue={editingClass?.instructor}
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                  placeholder="e.g., Mom"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Assign To</label>
+                <select
+                  name="family_member_id"
+                  defaultValue={editingClass?.family_member_id || ''}
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                >
+                  <option value="">All</option>
+                  {family.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Notes</label>
+                <textarea
+                  name="notes"
+                  defaultValue={editingClass?.notes}
+                  rows={3}
+                  className="w-full bg-dark-border border border-dark-border rounded-lg px-3 py-2 text-white"
+                  placeholder="Additional notes..."
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 rounded-lg"
+              >
+                {editingClass ? 'Update Class' : 'Add Class'}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
