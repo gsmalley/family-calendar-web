@@ -8,12 +8,22 @@ import MealForm from '../components/MealForm';
 
 const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 
+// Get default meal type based on current time
+const getDefaultMealType = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return 'breakfast';
+  if (hour >= 11 && hour < 15) return 'lunch';
+  if (hour >= 15 && hour < 18) return 'snack';
+  return 'dinner';
+};
+
 export default function Meals() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekMeals, setWeekMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMealForm, setShowMealForm] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | undefined>();
+  const [selectedMealType, setSelectedMealType] = useState<string>(getDefaultMealType());
 
   useEffect(() => {
     fetchMeals();
@@ -46,7 +56,14 @@ export default function Meals() {
           <Utensils className="w-6 h-6 text-orange-400" />
           Meal Plan
         </h2>
-        <button className="p-2 bg-primary-500 rounded-lg">
+        <button 
+          onClick={() => {
+            setEditingMeal(undefined);
+            setSelectedMealType(getDefaultMealType());
+            setShowMealForm(true);
+          }}
+          className="p-2 bg-primary-500 rounded-lg"
+        >
           <Plus className="w-5 h-5 text-white" />
         </button>
       </div>
@@ -93,6 +110,7 @@ export default function Meals() {
                   <button 
                     onClick={() => {
                       setEditingMeal(meal);
+                      setSelectedMealType(type);
                       setShowMealForm(true);
                     }}
                     className="p-2 text-gray-500 hover:text-primary-400"
@@ -145,6 +163,7 @@ export default function Meals() {
         onSuccess={() => fetchMeals()}
         editMeal={editingMeal}
         date={format(selectedDate, 'yyyy-MM-dd')}
+        mealType={selectedMealType}
       />
     </div>
   );

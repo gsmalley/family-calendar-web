@@ -8,6 +8,7 @@ export default function Classes() {
   const [classList, setClassList] = useState<Class[]>([]);
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showClassForm, setShowClassForm] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -25,8 +26,7 @@ export default function Classes() {
       console.error('Error:', error);
     } finally {
       setLoading(false);
-    }
-  };
+    };
 
   const getMemberName = (id?: string) => family.find(m => m.id === id)?.name || 'All';
 
@@ -38,7 +38,10 @@ export default function Classes() {
           <GraduationCap className="w-6 h-6 text-pink-400" />
           Classes
         </h2>
-        <button className="p-2 bg-primary-500 rounded-lg">
+        <button 
+          onClick={() => setShowClassForm(true)}
+          className="p-2 bg-primary-500 rounded-lg"
+        >
           <Plus className="w-5 h-5 text-white" />
         </button>
       </div>

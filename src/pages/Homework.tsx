@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, Clock, CheckCircle } from 'lucide-react';
+import { BookOpen, Plus, Clock, CheckCircle, Pencil } from 'lucide-react';
 import { homework, familyMembers } from '../services/api';
 import { Homework as HomeworkData, FamilyMember } from '../types';
+import HomeworkForm from '../components/HomeworkForm';
 
 export default function Homework() {
   const [homework_, setHomework] = useState<HomeworkData[]>([]);
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [loading, setLoading] = useState(true);
+  const [showHomeworkForm, setShowHomeworkForm] = useState(false);
+  const [editingHomework, setEditingHomework] = useState<HomeworkData | undefined>();
 
   useEffect(() => {
     fetchData();
@@ -35,10 +38,16 @@ export default function Homework() {
 
   const toggleHomework = async (id: string, completed: boolean) => {
     try {
-      await homework.update(id, { completed: !completed });
-      fetchData();
+      const newCompleted = !completed;
+      await homework.update(id, { completed: newCompleted });
+      // Update local state immediately for better UX
+      setHomework(prev => prev.map(hw => 
+        hw.id === id ? { ...hw, completed: newCompleted } : hw
+      ));
     } catch (error) {
       console.error('Error:', error);
+      // Revert on error
+      fetchData();
     }
   };
 
@@ -52,7 +61,13 @@ export default function Homework() {
           <BookOpen className="w-6 h-6 text-purple-400" />
           Homework
         </h2>
-        <button className="p-2 bg-primary-500 rounded-lg">
+        <button 
+          onClick={() => {
+            setEditingHomework(undefined);
+            setShowHomeworkForm(true);
+          }}
+          className="p-2 bg-primary-500 rounded-lg"
+        >
           <Plus className="w-5 h-5 text-white" />
         </button>
       </div>
@@ -130,11 +145,31 @@ export default function Homework() {
                     </div>
                   </div>
                 </div>
+                <button 
+                  onClick={() => {
+                    setEditingHomework(hw);
+                    setShowHomeworkForm(true);
+                  }}
+                  className="p-2 text-gray-500 hover:text-primary-400"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
               </div>
             </motion.div>
           ))
         )}
       </div>
+
+      {/* Add/Edit Homework Form */}
+      <HomeworkForm
+        isOpen={showHomeworkForm}
+        onClose={() => {
+          setShowHomeworkForm(false);
+          setEditingHomework(undefined);
+        }}
+        onSuccess={() => fetchData()}
+        editHomework={editingHomework}
+      />
     </div>
   );
 }

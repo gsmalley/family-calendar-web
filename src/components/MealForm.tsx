@@ -10,6 +10,7 @@ interface MealFormProps {
   onSuccess: () => void;
   editMeal?: Meal;
   date: string;
+  mealType?: string;
 }
 
 const mealTypes = [
@@ -19,11 +20,20 @@ const mealTypes = [
   { value: 'snack', label: 'Snack' },
 ];
 
-export default function MealForm({ isOpen, onClose, onSuccess, editMeal, date }: MealFormProps) {
+// Get default meal type based on current time
+const getDefaultMealType = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return 'breakfast';
+  if (hour >= 11 && hour < 15) return 'lunch';
+  if (hour >= 15 && hour < 18) return 'snack';
+  return 'dinner';
+};
+
+export default function MealForm({ isOpen, onClose, onSuccess, editMeal, date, mealType }: MealFormProps) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     date: date,
-    meal_type: 'dinner',
+    meal_type: mealType || 'dinner',
     name: '',
     ingredients: '',
     notes: '',
@@ -40,16 +50,24 @@ export default function MealForm({ isOpen, onClose, onSuccess, editMeal, date }:
           notes: editMeal.notes || '',
         });
       } else {
+        // Use passed mealType, or determine based on time if not provided
+        const defaultType = mealType || (() => {
+          const hour = new Date().getHours();
+          if (hour >= 5 && hour < 11) return 'breakfast';
+          if (hour >= 11 && hour < 15) return 'lunch';
+          if (hour >= 15 && hour < 18) return 'snack';
+          return 'dinner';
+        })();
         setForm({
           date,
-          meal_type: 'dinner',
+          meal_type: defaultType,
           name: '',
           ingredients: '',
           notes: '',
         });
       }
     }
-  }, [isOpen, editMeal, date]);
+  }, [isOpen, editMeal, date, mealType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
