@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckSquare, Plus, Filter, ChevronDown, X } from 'lucide-react';
+import { CheckSquare, Plus, Filter, ChevronDown, X, Pencil, Trash2 } from 'lucide-react';
 import { tasks, familyMembers } from '../services/api';
 import { Task, FamilyMember } from '../types';
 import TaskForm from '../components/TaskForm';
@@ -16,6 +16,8 @@ export default function Tasks() {
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTask, setEditTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +51,21 @@ export default function Tasks() {
   const toggleTask = async (id: string) => {
     try {
       await tasks.toggle(id);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleEdit = (task: Task) => {
+    setEditTask(task);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await tasks.delete(id);
       fetchTasks();
     } catch (error) {
       console.error('Error:', error);
@@ -145,17 +162,47 @@ export default function Tasks() {
                     )}
                   </div>
                 </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleEdit(task)}
+                    className="p-2 text-gray-400 hover:text-primary-400 hover:bg-dark-border rounded-lg transition-colors"
+                    title="Edit task"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-dark-border rounded-lg transition-colors"
+                    title="Delete task"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))
         )}
       </div>
 
-      {/* Add/Edit Task Form */}
+      {/* Add Task Form */}
       <TaskForm
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={() => fetchTasks()}
+      />
+
+      {/* Edit Task Form */}
+      <TaskForm
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditTask(null);
+        }}
+        onSuccess={() => {
+          fetchTasks();
+          setEditTask(null);
+        }}
+        editTask={editTask}
       />
     </div>
   );

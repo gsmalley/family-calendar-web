@@ -26,7 +26,8 @@ export default function Classes() {
       console.error('Error:', error);
     } finally {
       setLoading(false);
-    };
+    }
+  };
 
   const getMemberName = (id?: string) => family.find(m => m.id === id)?.name || 'All';
 
