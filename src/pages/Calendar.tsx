@@ -1,28 +1,110 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Edit2, Trash2 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
-import { events, familyMembers } from '../services/api';
-import { Event, FamilyMember } from '../types';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, parseISO } from 'date-fns';
+import { events, tasks, homework, meals, classes, familyMembers } from '../services/api';
+import { Event, FamilyMember, Task, Homework, Meal, Class } from '../types';
 import EventForm from '../components/EventForm';
+
+interface CalendarItem {
+  id: string;
+  title: string;
+  date: string;
+  type: 'event' | 'task' | 'homework' | 'meal' | 'class';
+  family_member_id?: string;
+  all_day?: boolean;
+  start_time?: string;
+  end_time?: string;
+}
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events_, setEvents] = useState<Event[]>([]);
+  const [tasks_, setTasks] = useState<Task[]>([]);
+  const [homework_, setHomework] = useState<Homework[]>([]);
+  const [meals_, setMeals] = useState<Meal[]>([]);
+  const [classes_, setClasses] = useState<Class[]>([]);
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [editEvent, setEditEvent] = useState<Event | undefined>(undefined);
 
+  // Convert all items to a unified calendar items format
+  const getCalendarItems = (): CalendarItem[] => {
+    const items: CalendarItem[] = [];
+    
+    // Add events
+    events_.forEach(event => {
+      items.push({
+        id: event.id,
+        title: event.title,
+        date: event.start_time.split('T')[0],
+        type: 'event',
+        family_member_id: event.family_member_id,
+        all_day: event.all_day,
+        start_time: event.start_time,
+        end_time: event.end_time
+      });
+    });
+    
+    // Add tasks (using due_date)
+    tasks_.forEach(task => {
+      if (task.due_date) {
+        items.push({
+          id: task.id,
+          title: task.title,
+          date: task.due_date,
+          type: 'task',
+          family_member_id: task.family_member_id
+        });
+      }
+    });
+    
+    // Add homework (using due_date)
+    homework_.forEach(hw => {
+      items.push({
+        id: hw.id,
+        title: `${hw.subject}: ${hw.description || ''}`,
+        date: hw.due_date,
+        type: 'homework',
+        family_member_id: hw.family_member_id
+      });
+    });
+    
+    // Add meals (using date)
+    meals_.forEach(meal => {
+      items.push({
+        id: meal.id,
+        title: `${meal.meal_type}: ${meal.name}`,
+        date: meal.date,
+        type: 'meal',
+        family_member_id: undefined
+      });
+    });
+    
+    // Classes don't have specific dates in the schema, so we'll skip them
+    // or could add them based on schedule if needed
+    
+    return items;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventsRes, familyRes] = await Promise.all([
+        const [eventsRes, tasksRes, homeworkRes, mealsRes, classesRes, familyRes] = await Promise.all([
           events.getAll(),
+          tasks.getAll(),
+          homework.getAll(),
+          meals.getAll(),
+          classes.getAll(),
           familyMembers.getAll(),
         ]);
         setEvents(eventsRes.data);
+        setTasks(tasksRes.data);
+        setHomework(homeworkRes.data);
+        setMeals(mealsRes.data);
+        setClasses(classesRes.data);
         setFamily(familyRes.data);
       } catch (error) {
         console.error('Error:', error);
@@ -64,13 +146,25 @@ export default function Calendar() {
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const getEventsForDay = (day: Date) => events_.filter(e => 
-    isSameDay(new Date(e.start_time), day)
-  );
+  const getItemsForDay = (day: Date) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return getCalendarItems().filter(item => item.date === dayStr);
+  };
 
   const getMemberColor = (id?: string) => {
     const member = family.find(m => m.id === id);
     return member?.color || '#6366f1';
+  };
+
+  // Get color based on item type
+  const getItemTypeColor = (type: string) => {
+    switch (type) {
+      case 'event': return '#3b82f6';    // blue
+      case 'task': return '#22c55e';     // green
+      case 'homework': return '#f59e0b'; // amber
+      case 'meal': return '#ec4899';     // pink
+      default: return '#6366f1';
+    }
   };
 
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
@@ -123,7 +217,7 @@ export default function Calendar() {
           ))}
           
           {days.map(day => {
-            const dayEvents = getEventsForDay(day);
+            const dayItems = getItemsForDay(day);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             
             return (
@@ -145,13 +239,13 @@ export default function Calendar() {
                 }`}>
                   {format(day, 'd')}
                 </span>
-                {dayEvents.length > 0 && (
+                {dayItems.length > 0 && (
                   <div className="flex gap-0.5 mt-1 flex-wrap justify-center">
-                    {dayEvents.slice(0, 3).map((e, i) => (
+                    {dayItems.slice(0, 3).map((item, i) => (
                       <div 
                         key={i} 
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: getMemberColor(e.family_member_id) }}
+                        style={{ backgroundColor: item.family_member_id ? getMemberColor(item.family_member_id) : getItemTypeColor(item.type) }}
                       />
                     ))}
                   </div>
@@ -162,7 +256,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Selected Day Events */}
+      {/* Selected Day Items */}
       {selectedDate && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -173,38 +267,31 @@ export default function Calendar() {
             {format(selectedDate, 'EEEE, MMMM d')}
           </h3>
           <div className="space-y-3">
-            {getEventsForDay(selectedDate).length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No events scheduled</p>
+            {getItemsForDay(selectedDate).length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No items scheduled</p>
             ) : (
-              getEventsForDay(selectedDate).map(event => (
+              getItemsForDay(selectedDate).map(item => (
                 <div
-                  key={event.id}
+                  key={item.id}
                   className="flex items-center gap-3 p-3 bg-dark-bg rounded-xl border border-dark-border group"
                 >
                   <div 
                     className="w-2 h-full rounded-full"
-                    style={{ backgroundColor: getMemberColor(event.family_member_id), minHeight: '40px' }}
+                    style={{ backgroundColor: item.family_member_id ? getMemberColor(item.family_member_id) : getItemTypeColor(item.type), minHeight: '40px' }}
                   />
                   <div className="flex-1">
-                    <p className="text-white font-medium">{event.title}</p>
-                    <p className="text-xs text-gray-500">
-                      {event.all_day ? 'All day' : `${event.start_time} - ${event.end_time || ''}`}
+                    <p className="text-white font-medium">{item.title}</p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {item.type === 'event' && (item.all_day ? 'All day' : `${item.start_time?.split('T')[1] || ''} - ${item.end_time?.split('T')[1] || ''}`)}
+                      {item.type === 'task' && `Task`}
+                      {item.type === 'homework' && `Homework`}
+                      {item.type === 'meal' && `Meal`}
+                      {item.type === 'class' && `Class`}
                     </p>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleEditEvent(event)}
-                      className="p-1.5 bg-dark-card rounded-lg hover:bg-dark-border"
-                    >
-                      <Edit2 className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className="p-1.5 bg-dark-card rounded-lg hover:bg-dark-border"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-dark-border text-gray-400 capitalize">
+                    {item.type}
+                  </span>
                 </div>
               ))
             )}
