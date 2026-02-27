@@ -36,13 +36,12 @@ export default function Homework() {
     }
   };
 
-  const toggleHomework = async (id: string, completed: boolean) => {
+  const toggleHomework = async (id: string) => {
     try {
-      const newCompleted = !completed;
-      await homework.update(id, { completed: newCompleted });
+      await homework.toggle(id);
       // Update local state immediately for better UX
       setHomework(prev => prev.map(hw => 
-        hw.id === id ? { ...hw, completed: newCompleted } : hw
+        hw.id === id ? { ...hw, completed: !hw.completed } : hw
       ));
     } catch (error) {
       console.error('Error:', error);
@@ -116,7 +115,7 @@ export default function Homework() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1">
                   <button
-                    onClick={() => toggleHomework(hw.id, hw.completed)}
+                    onClick={() => toggleHomework(hw.id)}
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 ${
                       hw.completed
                         ? 'bg-green-500 border-green-500'

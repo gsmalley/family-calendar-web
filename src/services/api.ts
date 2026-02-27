@@ -76,6 +76,7 @@ export const homework = {
   get: (id: string) => api.get(`/homework/${id}`),
   create: (data: Partial<any>) => api.post('/homework', data),
   update: (id: string, data: Partial<any>) => api.put(`/homework/${id}`, data),
+  toggle: (id: string) => api.patch(`/homework/${id}/toggle`),
   delete: (id: string) => api.delete(`/homework/${id}`),
 };
 
