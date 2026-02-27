@@ -21,10 +21,16 @@ export default function TaskForm({ isOpen, onClose, onSuccess, editTask }: TaskF
   const [family, setFamily] = useState<FamilyMember[]>([]);
   const [types, setTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(false);
+  // Helper to get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const [form, setForm] = useState({
     title: '',
     description: '',
-    due_date: '',
+    due_date: getTodayDate(),
     priority: 'medium',
     family_member_id: '',
     category: '',
@@ -70,7 +76,7 @@ export default function TaskForm({ isOpen, onClose, onSuccess, editTask }: TaskF
       }
       onSuccess();
       onClose();
-      setForm({ title: '', description: '', due_date: '', priority: 'medium', family_member_id: '', category: '' });
+      setForm({ title: '', description: '', due_date: getTodayDate(), priority: 'medium', family_member_id: '', category: '' });
     } catch (error) {
       console.error('Error:', error);
     } finally {
