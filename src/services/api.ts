@@ -146,7 +146,7 @@ export const teamKanban = {
     priority?: string;
     project?: string;
     status?: string;
-  }) => api.get('/team/kanban', { params: filters }),
+  }) => api.get('/kanban/tasks', { params: filters }),
   
   createTask: (data: {
     title: string;
@@ -157,13 +157,13 @@ export const teamKanban = {
     labels: string[];
     project: string;
     backlogStatus?: string;
-  }) => api.post('/team/kanban', data),
+  }) => api.post('/kanban/tasks', data),
   
-  updateTask: (id: string, data: Record<string, unknown>) => api.put(`/team/kanban/${id}`, data),
+  updateTask: (id: string, data: Record<string, unknown>) => api.put(`/kanban/tasks/${id}`, data),
   
-  moveTask: (id: string, status: string) => api.put(`/team/kanban/${id}/move`, { status }),
+  moveTask: (id: string, status: string) => api.put(`/kanban/tasks/${id}/move`, { status }),
   
-  deleteTask: (id: string) => api.delete(`/team/kanban/${id}`),
+  deleteTask: (id: string) => api.delete(`/kanban/tasks/${id}`),
 };
 
 export default api;

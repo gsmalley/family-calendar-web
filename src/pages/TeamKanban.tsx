@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { teamKanban } from '../services/api';
+import { AuthContext } from '../context/AuthContext';
 import type { 
   TeamKanbanTask, 
   KanbanStatus, 
@@ -60,6 +61,7 @@ function getAgentInfo(name: string) {
 }
 
 export default function TeamKanban() {
+  const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState<TeamKanbanTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function TeamKanban() {
       setLoading(true);
       setError(null);
       const response = await teamKanban.getTasks(filters);
-      setTasks(response.data);
+      setTasks(response.data.tasks || []);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('Failed to load tasks. Make sure the backend is running.');
@@ -110,7 +112,7 @@ export default function TeamKanban() {
   };
 
   const filteredTasks = view === 'mine' 
-    ? tasks.filter(t => t.assignee === 'pow') // For now, hardcoded to pow
+    ? tasks.filter(t => t.assignee === user?.username) // Filter by logged-in user
     : tasks;
 
   const tasksByStatus = COLUMNS.reduce((acc, col) => {
