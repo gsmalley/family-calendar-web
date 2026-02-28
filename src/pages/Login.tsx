@@ -10,7 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +20,8 @@ export default function Login() {
 
     try {
       if (isRegister) {
-        // Would need to add register to AuthContext
-        setError('Registration not implemented yet');
+        await register(username, password);
+        navigate('/');
       } else {
         await login(username, password);
         navigate('/');
