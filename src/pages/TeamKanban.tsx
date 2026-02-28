@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { teamKanban } from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import type { 
   TeamKanbanTask, 
   KanbanStatus, 
@@ -61,7 +61,7 @@ function getAgentInfo(name: string) {
 }
 
 export default function TeamKanban() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<TeamKanbanTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
