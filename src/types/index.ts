@@ -114,3 +114,59 @@ export interface Badge {
   description: string;
   earned_at: string;
 }
+
+// Team Kanban Types
+export type KanbanStatus = 'backlog' | 'in_progress' | 'testing' | 'review' | 'done';
+export type KanbanPriority = 'p1' | 'p2' | 'p3';
+export type KanbanCategory = 'feature' | 'bug' | 'chore' | 'docs';
+export type BacklogStatus = 'blocked' | 'ready' | 'need_specs';
+
+export interface TeamKanbanTask {
+  id: string;
+  title: string;
+  description: string;
+  status: KanbanStatus;
+  priority: KanbanPriority;
+  category: KanbanCategory;
+  storyPoints: number;
+  labels: string[];
+  project: string;
+  backlogStatus?: BacklogStatus;
+  assignee: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  completedBy: string | null;
+  reviewer: string | null;
+  prLink: string | null;
+  deployedTo: string | null;
+  createdAt: string;
+}
+
+export interface KanbanTaskFilters {
+  assignee?: string;
+  category?: KanbanCategory;
+  priority?: KanbanPriority;
+  project?: string;
+  status?: KanbanStatus;
+}
+
+export interface CreateTaskData {
+  title: string;
+  description: string;
+  priority: KanbanPriority;
+  category: KanbanCategory;
+  storyPoints: number;
+  labels: string[];
+  project: string;
+  backlogStatus?: BacklogStatus;
+}
+
+export interface UpdateTaskData extends Partial<CreateTaskData> {
+  assignee?: string;
+  reviewer?: string;
+  prLink?: string;
+  deployedTo?: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  completedBy?: string | null;
+}

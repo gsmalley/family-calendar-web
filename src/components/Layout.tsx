@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Calendar, CheckSquare, BookOpen, Utensils, 
-  GraduationCap, Users, Trophy, Menu, X, LogOut, Sparkles
+  GraduationCap, Users, Trophy, Menu, X, LogOut, Sparkles, Kanban
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,7 @@ const navItems = [
   { path: '/meals', icon: Utensils, label: 'Meals' },
   { path: '/classes', icon: GraduationCap, label: 'Classes' },
   { path: '/family', icon: Users, label: 'Family' },
+  { path: '/team-kanban', icon: Kanban, label: 'Team Board' },
   { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
 ];
 

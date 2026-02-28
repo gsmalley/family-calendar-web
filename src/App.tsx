@@ -10,6 +10,7 @@ import Meals from './pages/Meals';
 import Classes from './pages/Classes';
 import Family from './pages/Family';
 import Leaderboard from './pages/Leaderboard';
+import TeamKanban from './pages/TeamKanban';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/family" element={<Family />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/team-kanban" element={<TeamKanban />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

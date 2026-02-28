@@ -138,4 +138,32 @@ export const dashboard = {
   getNews: () => api.get('/news'),
 };
 
+// Team Kanban
+export const teamKanban = {
+  getTasks: (filters?: {
+    assignee?: string;
+    category?: string;
+    priority?: string;
+    project?: string;
+    status?: string;
+  }) => api.get('/team/kanban', { params: filters }),
+  
+  createTask: (data: {
+    title: string;
+    description: string;
+    priority: string;
+    category: string;
+    storyPoints: number;
+    labels: string[];
+    project: string;
+    backlogStatus?: string;
+  }) => api.post('/team/kanban', data),
+  
+  updateTask: (id: string, data: Record<string, unknown>) => api.put(`/team/kanban/${id}`, data),
+  
+  moveTask: (id: string, status: string) => api.put(`/team/kanban/${id}/move`, { status }),
+  
+  deleteTask: (id: string) => api.delete(`/team/kanban/${id}`),
+};
+
 export default api;
